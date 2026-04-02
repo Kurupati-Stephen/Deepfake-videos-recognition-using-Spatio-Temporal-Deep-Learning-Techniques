@@ -1,0 +1,26 @@
+# Environments
+venv/
+env/
+.env
+
+# PyTorch Model Weights
+*.pth
+*.pt
+*.onnx
+
+# Cache
+__pycache__/
+*.pyc
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store
+
+# Temporary outputs
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+results/suspicious/*
+!results/suspicious/.gitkeep

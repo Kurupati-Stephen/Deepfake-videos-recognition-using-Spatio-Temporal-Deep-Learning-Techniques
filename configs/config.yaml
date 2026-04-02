@@ -1,0 +1,24 @@
+paths:
+  desktop_dataset: "/Users/kurupatigrahamstaines/Desktop/DeepfakeAI_Video_Recognition"
+  project_data: "data/"
+  raw_real_dir: "data/raw/real/"
+  raw_fake_dir: "data/raw/fake/"
+  processed_frames_dir: "data/processed/"
+  splits_dir: "data/splits/"
+  results_dir: "results/"
+  models_dir: "models/"
+
+model:
+  image_size: 224
+  sequence_length: 10
+  batch_size: 8
+  epochs: 10
+  learning_rate: 0.001
+  hidden_size: 256
+  
+preprocessing:
+  frames_per_video: 10
+  face_crop_size: 224
+  
+dashboard:
+  port: 8501

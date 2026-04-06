@@ -3,6 +3,7 @@ import yaml
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
 from dataset_loader import get_dataloaders
 from model import SpatioTemporalModel
@@ -26,13 +27,16 @@ def train_model():
     ).to(device)
     
     criterion = nn.BCELoss()
-    optimizer = Adam(model.parameters(), lr=config["model"]["learning_rate"])
+    optimizer = Adam(model.parameters(), lr=config["model"]["learning_rate"], weight_decay=1e-5)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)
     
     epochs = config["model"]["epochs"]
     models_dir = config["paths"]["models_dir"]
     os.makedirs(models_dir, exist_ok=True)
     
     best_loss = float('inf')
+    early_stop_patience = 5
+    patience_counter = 0
     
     for epoch in range(epochs):
         model.train()
@@ -60,9 +64,19 @@ def train_model():
         avg_loss = train_loss / len(train_loader)
         print(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
         
+        # Step the scheduler
+        scheduler.step(avg_loss)
+        
+        # Early Stopping Logic
         if avg_loss < best_loss:
             best_loss = avg_loss
             torch.save(model.state_dict(), os.path.join(models_dir, "best_model.pth"))
+            patience_counter = 0
+        else:
+            patience_counter += 1
+            if patience_counter >= early_stop_patience:
+                print(f"Early stopping triggered after epoch {epoch+1}")
+                break
             
 if __name__ == "__main__":
     train_model()

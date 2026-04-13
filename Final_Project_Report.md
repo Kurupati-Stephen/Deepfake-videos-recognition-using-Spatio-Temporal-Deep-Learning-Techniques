@@ -78,6 +78,9 @@ A resilient 3-tier cascade was engineered to guarantee facial acquisition across
 ### 3.3. Forensic Explainability Layer (Interpretability)
 Rather than raw inference, the system calculates gradients mapped back to the last convolutional layer. The **Grad-CAM Algorithm** highlights "heatmaps", isolating red-zone pixel clusters around spatial boundary artifacts (lips, chins) which indicate the forgery's focal point. 
 
+### 3.4. AI Risk Assessment & Case Management
+The system is upgraded to transcend simple detection. After inference, an **NLP-driven Risk Engine** classifies the semantic risk vectors linking the Deepfake prediction to concrete consequences (e.g., Political Threat, Privacy Violation, Financial Fraud). Integrated logic automatically assigns a discrete **Threat Level**, an actionable **Trust Score**, and a **Recommended Action**. Finally, the **Case Management module** stamps the incident with an alphanumeric monitoring ID and securely logs the forensic metadata inside a local CSV/JSON registry, automating the entire incident lifecycle.
+
 ---
 
 ## 4. Implementation Details (Dashboard)

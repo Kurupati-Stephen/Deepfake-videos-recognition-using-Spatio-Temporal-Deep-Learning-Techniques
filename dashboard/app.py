@@ -397,143 +397,146 @@ def main():
         else:
             c_anal, c_vid = st.columns([1, 1], gap="small")
             with c_anal:
-                if st.button("[ EXECUTE VIDEO FORENSIC SCAN ]", type="primary", use_container_width=True, key="video_btn"):
-                    with st.spinner("Extracting multi-frame biological features..."):
-                        tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
-                        tfile.write(uploaded_video.read())
-                        tfile_name = tfile.name
-                        tfile.close()
+                run_video_scan = st.button("[ EXECUTE VIDEO FORENSIC SCAN ]", type="primary", use_container_width=True, key="video_btn")
+            
+            if run_video_scan:
+                st.markdown("<hr style='border-top: 1px solid #1e293b; margin: 20px 0;'>", unsafe_allow_html=True)
+                with st.spinner("Extracting multi-frame biological features..."):
+                    tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+                    tfile.write(uploaded_video.read())
+                    tfile_name = tfile.name
+                    tfile.close()
 
-                        t_frames, faces, timestamps = extract_faces_from_video(tfile_name, config)
-                        os.unlink(tfile_name)
-                        
-                        if t_frames is None:
-                            st.error("[!] CRITICAL: No facial targets acquired.")
-                            st.stop()
-                            
-                    with st.spinner("Executing Spatio-Temporal deep tensor network inference..."):
-                        v_prob, f_probs, cams = run_grad_cam(model, t_frames.to(device))
-                        
-                    cls_text = "SYNTHETIC FORGERY" if v_prob > 0.5 else "AUTHENTIC MEDIA"
-                    prediction_text = "SYNTHETIC" if v_prob > 0.5 else "AUTHENTIC"
-                    context_data = context_text_vid + " " + uploaded_video.name
+                    t_frames, faces, timestamps = extract_faces_from_video(tfile_name, config)
+                    os.unlink(tfile_name)
                     
-                    risk_type = risk_engine.classify_risk(prediction_text, context_data)
-                    threat_level = risk_engine.assign_threat_level(risk_type, v_prob)
-                    recommended_action = risk_engine.get_recommendation(risk_type)
-                    trust_score = (1.0 - v_prob) * 100
+                    if t_frames is None:
+                        st.error("[!] CRITICAL: No facial targets acquired.")
+                        st.stop()
+                        
+                with st.spinner("Executing Spatio-Temporal deep tensor network inference..."):
+                    v_prob, f_probs, cams = run_grad_cam(model, t_frames.to(device))
                     
-                    case_mgr.save_case(case_id, uploaded_video.name, prediction_text, v_prob*100, risk_type, threat_level, trust_score, recommended_action)
+                cls_text = "SYNTHETIC FORGERY" if v_prob > 0.5 else "AUTHENTIC MEDIA"
+                prediction_text = "SYNTHETIC" if v_prob > 0.5 else "AUTHENTIC"
+                context_data = context_text_vid + " " + uploaded_video.name
+                
+                risk_type = risk_engine.classify_risk(prediction_text, context_data)
+                threat_level = risk_engine.assign_threat_level(risk_type, v_prob)
+                recommended_action = risk_engine.get_recommendation(risk_type)
+                trust_score = (1.0 - v_prob) * 100
+                
+                case_mgr.save_case(case_id, uploaded_video.name, prediction_text, v_prob*100, risk_type, threat_level, trust_score, recommended_action)
+                
+                spatial_conf = v_prob*100 * 0.95 if v_prob > 0.5 else (1-v_prob)*100 * 0.95
+                temporal_conf = v_prob*100 * 0.88 if v_prob > 0.5 else (1-v_prob)*100 * 0.88
                     
-                    spatial_conf = v_prob*100 * 0.95 if v_prob > 0.5 else (1-v_prob)*100 * 0.95
-                    temporal_conf = v_prob*100 * 0.88 if v_prob > 0.5 else (1-v_prob)*100 * 0.88
-                        
-                    r1_1, r1_2, r1_3 = st.columns([1,1,1])
-                    with r1_1:
-                        st.markdown(f'''<div class="dash-card">
-                        <div class="section-title">SYSTEM STATUS & CASE ID</div>
-                        <div class="sys-log" style="font-size:0.75rem;">
-                        CASE_ID    : <b style="color:#fcd34d;">{case_id}</b><br>
-                        FILE_TYPE  : Video<br>
-                        RISK_TYPE  : {risk_type}<br>
-                        PREDICTION : {cls_text}
-                        </div>
-                        </div>''', unsafe_allow_html=True)
-                        
-                    with r1_2:
-                        bc = "badge-danger" if threat_level in ["HIGH", "CRITICAL"] else "badge-med" if threat_level=="MEDIUM" else "badge-safe"
-                        st.markdown(f'''<div class="dash-card">
-                        <div class="section-title">THREAT LEVEL INDICATOR</div>
-                        <div class="{bc}">{threat_level.upper()} THREAT</div>
-                        <div style="margin-top:10px; font-size:0.85rem; padding:8px; background:#020617; border-left:3px solid #f87171;"><b>Action:</b> {recommended_action}</div>
-                        </div>''', unsafe_allow_html=True)
-                        
-                    with r1_3:
-                        st.markdown("<div class='dash-card'><div class='section-title'>TRUST SCORE METER</div>", unsafe_allow_html=True)
-                        st.plotly_chart(get_trust_score_gauge(v_prob), use_container_width=True)
-                        st.markdown("</div>", unsafe_allow_html=True)
-
-                    r2_1, r2_2 = st.columns([1, 2])
-                    with r2_1:
-                        st.markdown("<div class='dash-card'><div class='section-title'>RISK DISTRIBUTION</div>", unsafe_allow_html=True)
-                        st.plotly_chart(get_donut(f_probs), use_container_width=True)
-                        st.markdown("</div>", unsafe_allow_html=True)
-                        
-                    with r2_2:
-                        st.markdown("<div class='dash-card'><div class='section-title'>MODEL CONFIDENCE ANALYSIS</div>", unsafe_allow_html=True)
-                        st.plotly_chart(get_metrics_bar(metrics_data), use_container_width=True)
-                        st.markdown("</div>", unsafe_allow_html=True)
-
-                    r3_1, r3_2 = st.columns([1.5, 1])
-                    with r3_1:
-                         st.markdown("<div class='dash-card'><div class='section-title'>FRAME TIMELINE GRAPH</div>", unsafe_allow_html=True)
-                         st.plotly_chart(get_timeline(f_probs, timestamps), use_container_width=True)
-                         st.markdown("</div>", unsafe_allow_html=True)
-                         
-                    with r3_2:
-                         st.markdown("<div class='dash-card'><div class='section-title'>ANOMALY DISTRIBUTION</div>", unsafe_allow_html=True)
-                         st.plotly_chart(get_anomaly_bar(f_probs, timestamps), use_container_width=True)
-                         st.markdown("</div>", unsafe_allow_html=True)
-
-                    r4_1, r4_2 = st.columns([1.5, 1])
-                    with r4_1:
-                         st.markdown("<div class='dash-card'><div class='section-title'>AUDIO FORENSICS MODULE</div>", unsafe_allow_html=True)
-                         st.plotly_chart(generate_audio_check(v_prob, timestamps), use_container_width=True)
-                         st.markdown("</div>", unsafe_allow_html=True)
-                         
-                    with r4_2:
-                         st.markdown("<div class='dash-card'><div class='section-title'>GLOBAL TAMPERING MAP</div>", unsafe_allow_html=True)
-                         st.markdown("<p style='font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:5px;'>Averaged spatial anomaly detection map</p>", unsafe_allow_html=True)
-                         tamp_map = generate_tampering_map(faces, cams)
-                         if tamp_map is not None:
-                             mcol1, mcol2, mcol3 = st.columns([1,3,1])
-                             with mcol2:
-                                 st.image(tamp_map, use_container_width=True)
-                         st.markdown("</div>", unsafe_allow_html=True)
-
-                    st.markdown("<div class='dash-card'><div class='section-title'>FORENSIC INTELLIGENCE LAYER (EXPLAINABILITY)</div>", unsafe_allow_html=True)
-                    st.write("Gradient-weighted Class Activation Mapping (Grad-CAM) tracing internal Neural Net gradients.")
-                    c_i1, c_i2 = st.columns([1.5, 1])
-                    top_indices = np.argsort(f_probs)[::-1]
+                r1_1, r1_2, r1_3 = st.columns([1,1,1])
+                with r1_1:
+                    st.markdown(f'''<div class="dash-card">
+                    <div class="section-title">SYSTEM STATUS & CASE ID</div>
+                    <div class="sys-log" style="font-size:0.75rem;">
+                    CASE_ID    : <b style="color:#fcd34d;">{case_id}</b><br>
+                    FILE_TYPE  : Video<br>
+                    RISK_TYPE  : {risk_type}<br>
+                    PREDICTION : {cls_text}
+                    </div>
+                    </div>''', unsafe_allow_html=True)
                     
-                    with c_i1:
-                        g_cols = st.columns(5)
-                        for i, idx in enumerate(top_indices[:5]):
-                            if idx < len(f_probs) and idx < len(cams) and idx < len(faces):
-                                prob = f_probs[idx]
-                                cam_hm = cams[idx]
-                                overlay = draw_heatmap(faces[idx], cam_hm, alpha=0.55)
-                                
-                                out_path = os.path.join(suspicious_dir, f"intel_evidence_t{timestamps[idx]}.jpg")
-                                cv2.imwrite(out_path, cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR))
-                                
-                                with g_cols[i]:
-                                    st.image(overlay)
-                                    st.markdown(f"<div style='background:#0f172a; border: 1px solid #1e293b; border-radius:4px; padding:5px; text-align:center; font-size:0.75rem; color:#94a3b8;'>RANK {i+1}<br><b style='color:#38bdf8'>T+{timestamps[idx]}s</b><br><span style='color:{'#ef4444' if prob>0.5 else '#22c55e'}'>{prob*100:.1f}%</span></div>", unsafe_allow_html=True)
-                                
-                    with c_i2:
-                        summary = "Synthetic forgery detected with high confidence due to temporal inconsistencies and spatial blending artifacts near visual boundaries." if cls_text == "SYNTHETIC FORGERY" else "Target evaluated as authentic biological media. Background physics, spatial blending and temporal continuity exist within natural deviations."
-                        st.markdown(f'''
-                        <div style="background:#0f172a; padding:15px; border-radius:6px; border:1px solid #1e293b;">
-                            <b style="color:#f8fafc;">Diagnostic Forensic Summary:</b><br>
-                            <div style="color:#cbd5e1; margin-top:5px; margin-bottom:15px; font-size:0.9rem;">{summary}</div>
-                            <hr style="margin:8px 0px; border-color:#1e293b;">
-                            <b style="color:#f8fafc; font-size:0.8rem;">Architecture Sub-Confidence Breakdowns:</b><br>
-                            <div style="color:#38bdf8; font-size:0.85rem;">Spatial Texture Confidence: {spatial_conf:.1f}%</div>
-                            <div style="color:#ec4899; font-size:0.85rem;">Temporal Continuity Confidence: {temporal_conf:.1f}%</div>
-                        </div>
-                        ''', unsafe_allow_html=True)
-                        
-                        repo_text = generate_report_text(v_prob, f_probs, top_indices, timestamps, metrics_data, case_id, uploaded_video.name, risk_type, threat_level, recommended_action)
-                        st.download_button(
-                            label="[X] Export Forensic Incident Report (CASE ID)",
-                            data=repo_text,
-                            file_name=f"Case_{case_id}_{datetime.datetime.now().strftime('%H%M%S')}.txt",
-                            mime="text/plain",
-                            use_container_width=True,
-                            key="dl_video"
-                        )
+                with r1_2:
+                    bc = "badge-danger" if threat_level in ["HIGH", "CRITICAL"] else "badge-med" if threat_level=="MEDIUM" else "badge-safe"
+                    st.markdown(f'''<div class="dash-card">
+                    <div class="section-title">THREAT LEVEL INDICATOR</div>
+                    <div class="{bc}">{threat_level.upper()} THREAT</div>
+                    <div style="margin-top:10px; font-size:0.85rem; padding:8px; background:#020617; border-left:3px solid #f87171;"><b>Action:</b> {recommended_action}</div>
+                    </div>''', unsafe_allow_html=True)
+                    
+                with r1_3:
+                    st.markdown("<div class='dash-card'><div class='section-title'>TRUST SCORE METER</div>", unsafe_allow_html=True)
+                    st.plotly_chart(get_trust_score_gauge(v_prob), use_container_width=True)
                     st.markdown("</div>", unsafe_allow_html=True)
+
+                r2_1, r2_2 = st.columns([1, 2])
+                with r2_1:
+                    st.markdown("<div class='dash-card'><div class='section-title'>RISK DISTRIBUTION</div>", unsafe_allow_html=True)
+                    st.plotly_chart(get_donut(f_probs), use_container_width=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+                    
+                with r2_2:
+                    st.markdown("<div class='dash-card'><div class='section-title'>MODEL CONFIDENCE ANALYSIS</div>", unsafe_allow_html=True)
+                    st.plotly_chart(get_metrics_bar(metrics_data), use_container_width=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                r3_1, r3_2 = st.columns([1.5, 1])
+                with r3_1:
+                        st.markdown("<div class='dash-card'><div class='section-title'>FRAME TIMELINE GRAPH</div>", unsafe_allow_html=True)
+                        st.plotly_chart(get_timeline(f_probs, timestamps), use_container_width=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+                        
+                with r3_2:
+                        st.markdown("<div class='dash-card'><div class='section-title'>ANOMALY DISTRIBUTION</div>", unsafe_allow_html=True)
+                        st.plotly_chart(get_anomaly_bar(f_probs, timestamps), use_container_width=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                r4_1, r4_2 = st.columns([1.5, 1])
+                with r4_1:
+                        st.markdown("<div class='dash-card'><div class='section-title'>AUDIO FORENSICS MODULE</div>", unsafe_allow_html=True)
+                        st.plotly_chart(generate_audio_check(v_prob, timestamps), use_container_width=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+                        
+                with r4_2:
+                        st.markdown("<div class='dash-card'><div class='section-title'>GLOBAL TAMPERING MAP</div>", unsafe_allow_html=True)
+                        st.markdown("<p style='font-size:0.8rem; color:#64748b; margin-top:-10px; margin-bottom:5px;'>Averaged spatial anomaly detection map</p>", unsafe_allow_html=True)
+                        tamp_map = generate_tampering_map(faces, cams)
+                        if tamp_map is not None:
+                            mcol1, mcol2, mcol3 = st.columns([1,3,1])
+                            with mcol2:
+                                st.image(tamp_map, use_container_width=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                st.markdown("<div class='dash-card'><div class='section-title'>FORENSIC INTELLIGENCE LAYER (EXPLAINABILITY)</div>", unsafe_allow_html=True)
+                st.write("Gradient-weighted Class Activation Mapping (Grad-CAM) tracing internal Neural Net gradients.")
+                c_i1, c_i2 = st.columns([1.5, 1])
+                top_indices = np.argsort(f_probs)[::-1]
+                
+                with c_i1:
+                    g_cols = st.columns(5)
+                    for i, idx in enumerate(top_indices[:5]):
+                        if idx < len(f_probs) and idx < len(cams) and idx < len(faces):
+                            prob = f_probs[idx]
+                            cam_hm = cams[idx]
+                            overlay = draw_heatmap(faces[idx], cam_hm, alpha=0.55)
+                            
+                            out_path = os.path.join(suspicious_dir, f"intel_evidence_t{timestamps[idx]}.jpg")
+                            cv2.imwrite(out_path, cv2.cvtColor(overlay, cv2.COLOR_RGB2BGR))
+                            
+                            with g_cols[i]:
+                                st.image(overlay)
+                                st.markdown(f"<div style='background:#0f172a; border: 1px solid #1e293b; border-radius:4px; padding:5px; text-align:center; font-size:0.75rem; color:#94a3b8;'>RANK {i+1}<br><b style='color:#38bdf8'>T+{timestamps[idx]}s</b><br><span style='color:{'#ef4444' if prob>0.5 else '#22c55e'}'>{prob*100:.1f}%</span></div>", unsafe_allow_html=True)
+                            
+                with c_i2:
+                    summary = "Synthetic forgery detected with high confidence due to temporal inconsistencies and spatial blending artifacts near visual boundaries." if cls_text == "SYNTHETIC FORGERY" else "Target evaluated as authentic biological media. Background physics, spatial blending and temporal continuity exist within natural deviations."
+                    st.markdown(f'''
+                    <div style="background:#0f172a; padding:15px; border-radius:6px; border:1px solid #1e293b;">
+                        <b style="color:#f8fafc;">Diagnostic Forensic Summary:</b><br>
+                        <div style="color:#cbd5e1; margin-top:5px; margin-bottom:15px; font-size:0.9rem;">{summary}</div>
+                        <hr style="margin:8px 0px; border-color:#1e293b;">
+                        <b style="color:#f8fafc; font-size:0.8rem;">Architecture Sub-Confidence Breakdowns:</b><br>
+                        <div style="color:#38bdf8; font-size:0.85rem;">Spatial Texture Confidence: {spatial_conf:.1f}%</div>
+                        <div style="color:#ec4899; font-size:0.85rem;">Temporal Continuity Confidence: {temporal_conf:.1f}%</div>
+                    </div>
+                    ''', unsafe_allow_html=True)
+                    
+                    repo_text = generate_report_text(v_prob, f_probs, top_indices, timestamps, metrics_data, case_id, uploaded_video.name, risk_type, threat_level, recommended_action)
+                    st.download_button(
+                        label="[X] Export Forensic Incident Report (CASE ID)",
+                        data=repo_text,
+                        file_name=f"Case_{case_id}_{datetime.datetime.now().strftime('%H%M%S')}.txt",
+                        mime="text/plain",
+                        use_container_width=True,
+                        key="dl_video"
+                    )
+                st.markdown("</div>", unsafe_allow_html=True)
 
     # ==========================================
     #             IMAGE PIPELINE
@@ -547,57 +550,60 @@ def main():
             with c_img:
                 st.image(uploaded_image, caption="Uploaded Document", use_container_width=True)
             with c_anal:
-                if st.button("[ EXECUTE IMAGE FORENSIC SCAN ]", type="primary", use_container_width=True, key="image_btn"):
-                    with st.spinner("Executing spatial analysis routing..."):
-                        tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-                        tfile.write(uploaded_image.read())
-                        tfile_name = tfile.name
-                        tfile.close()
+                run_image_scan = st.button("[ EXECUTE IMAGE FORENSIC SCAN ]", type="primary", use_container_width=True, key="image_btn")
+            
+            if run_image_scan:
+                st.markdown("<hr style='border-top: 1px solid #1e293b; margin: 20px 0;'>", unsafe_allow_html=True)
+                with st.spinner("Executing spatial analysis routing..."):
+                    tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+                    tfile.write(uploaded_image.read())
+                    tfile_name = tfile.name
+                    tfile.close()
 
-                        img_result = predict_image(tfile_name, model=model, device=device, config=config)
-                        os.unlink(tfile_name)
-                        
-                        v_prob = img_result["fake_probability"]
-                        prediction_text = img_result["prediction"]
-                        cls_text = ("SYNTHETIC FORGERY" if v_prob > 0.5 else "AUTHENTIC MEDIA")
+                    img_result = predict_image(tfile_name, model=model, device=device, config=config)
+                    os.unlink(tfile_name)
+                    
+                    v_prob = img_result["fake_probability"]
+                    prediction_text = img_result["prediction"]
+                    cls_text = ("SYNTHETIC FORGERY" if v_prob > 0.5 else "AUTHENTIC MEDIA")
 
-                        context_data = context_text_img + " " + uploaded_image.name
-                        risk_type = risk_engine.classify_risk(prediction_text, context_data)
-                        threat_level = risk_engine.assign_threat_level(risk_type, v_prob)
-                        recommended_action = risk_engine.get_recommendation(risk_type)
-                        trust_score = (1.0 - v_prob) * 100
-                        
-                        case_mgr.save_case(case_id, uploaded_image.name, prediction_text, v_prob*100, risk_type, threat_level, trust_score, recommended_action)
-                        
-                    r1_1, r1_2, r1_3 = st.columns([1,1,1])
-                    with r1_1:
-                        st.markdown(f'''<div class="dash-card">
-                        <div class="section-title">SYSTEM STATUS</div>
-                        <div class="sys-log" style="font-size:0.75rem;">
-                        CASE_ID    : <b style="color:#fcd34d;">{case_id}</b><br>
-                        FILE_TYPE  : Image<br>
-                        PREDICTION : {cls_text}<br>
-                        STATUS     : {img_result["status_message"]}
-                        </div>
-                        </div>''', unsafe_allow_html=True)
-                    with r1_2:
-                        bc = "badge-danger" if threat_level in ["HIGH", "CRITICAL"] else "badge-med" if threat_level=="MEDIUM" else "badge-safe"
-                        st.markdown(f'''<div class="dash-card">
-                        <div class="section-title">THREAT LEVEL INDICATOR</div>
-                        <div class="{bc}">{threat_level.upper()} THREAT</div>
-                        <div style="margin-top:10px; font-size:0.85rem; padding:8px; background:#020617; border-left:3px solid #f87171;"><b>Action:</b> {recommended_action}</div>
-                        </div>''', unsafe_allow_html=True)
-                    with r1_3:
-                        st.markdown("<div class='dash-card'><div class='section-title'>TRUST SCORE METER</div>", unsafe_allow_html=True)
-                        st.plotly_chart(get_trust_score_gauge(v_prob), use_container_width=True)
-                        st.markdown("</div>", unsafe_allow_html=True)
-                        
-                    st.markdown("<div class='dash-card'><div class='section-title'>SPATIAL TAMPERING MAP (GRAD-CAM)</div>", unsafe_allow_html=True)
-                    cam_overlay = draw_heatmap(img_result["face_img"], img_result["cam"], alpha=0.55)
-                    col_m1, col_m2, col_m3 = st.columns([1, 2, 1])
-                    with col_m2:
-                        st.image(cam_overlay, use_container_width=True, caption="Tampering Map Overview")
+                    context_data = context_text_img + " " + uploaded_image.name
+                    risk_type = risk_engine.classify_risk(prediction_text, context_data)
+                    threat_level = risk_engine.assign_threat_level(risk_type, v_prob)
+                    recommended_action = risk_engine.get_recommendation(risk_type)
+                    trust_score = (1.0 - v_prob) * 100
+                    
+                    case_mgr.save_case(case_id, uploaded_image.name, prediction_text, v_prob*100, risk_type, threat_level, trust_score, recommended_action)
+                    
+                r1_1, r1_2, r1_3 = st.columns([1,1,1])
+                with r1_1:
+                    st.markdown(f'''<div class="dash-card">
+                    <div class="section-title">SYSTEM STATUS</div>
+                    <div class="sys-log" style="font-size:0.75rem;">
+                    CASE_ID    : <b style="color:#fcd34d;">{case_id}</b><br>
+                    FILE_TYPE  : Image<br>
+                    PREDICTION : {cls_text}<br>
+                    STATUS     : {img_result["status_message"]}
+                    </div>
+                    </div>''', unsafe_allow_html=True)
+                with r1_2:
+                    bc = "badge-danger" if threat_level in ["HIGH", "CRITICAL"] else "badge-med" if threat_level=="MEDIUM" else "badge-safe"
+                    st.markdown(f'''<div class="dash-card">
+                    <div class="section-title">THREAT LEVEL INDICATOR</div>
+                    <div class="{bc}">{threat_level.upper()} THREAT</div>
+                    <div style="margin-top:10px; font-size:0.85rem; padding:8px; background:#020617; border-left:3px solid #f87171;"><b>Action:</b> {recommended_action}</div>
+                    </div>''', unsafe_allow_html=True)
+                with r1_3:
+                    st.markdown("<div class='dash-card'><div class='section-title'>TRUST SCORE METER</div>", unsafe_allow_html=True)
+                    st.plotly_chart(get_trust_score_gauge(v_prob), use_container_width=True)
                     st.markdown("</div>", unsafe_allow_html=True)
+                    
+                st.markdown("<div class='dash-card'><div class='section-title'>SPATIAL TAMPERING MAP (GRAD-CAM)</div>", unsafe_allow_html=True)
+                cam_overlay = draw_heatmap(img_result["face_img"], img_result["cam"], alpha=0.55)
+                col_m1, col_m2, col_m3 = st.columns([1, 2, 1])
+                with col_m2:
+                    st.image(cam_overlay, use_container_width=True, caption="Tampering Map Overview")
+                st.markdown("</div>", unsafe_allow_html=True)
 
     # ==========================================
     #             AUDIO PIPELINE
@@ -609,7 +615,10 @@ def main():
         if uploaded_audio:
             st.audio(uploaded_audio)
             
-            if st.button("[ EXECUTE AUDIO FORENSIC SCAN ]", type="primary", use_container_width=True, key="audio_btn"):
+            run_audio_scan = st.button("[ EXECUTE AUDIO FORENSIC SCAN ]", type="primary", use_container_width=True, key="audio_btn")
+            
+            if run_audio_scan:
+                st.markdown("<hr style='border-top: 1px solid #1e293b; margin: 20px 0;'>", unsafe_allow_html=True)
                 with st.spinner("Extracting vocal tract and frequency characteristics..."):
                     tfile = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
                     tfile.write(uploaded_audio.read())

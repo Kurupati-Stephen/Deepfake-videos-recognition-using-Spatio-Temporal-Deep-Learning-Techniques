@@ -150,7 +150,7 @@ def extract_faces_from_video(video_path, config, detection_conf=0.75):
     return torch.stack(frames_tensor).unsqueeze(0), original_faces, timestamp_log
 
 def run_grad_cam(model, input_tensor):
-    model.train()
+    model.eval()
     for param in model.parameters(): param.requires_grad = True
     input_tensor.requires_grad = True
     
@@ -192,10 +192,13 @@ def parse_metrics(results_dir):
         lines = open(metrics_path, 'r').readlines()
         for line in lines:
             line = line.strip()
-            if "Accuracy:" in line: metrics["Accuracy"] = float(line.split()[-1])
-            elif "Precision:" in line: metrics["Precision"] = float(line.split()[-1])
-            elif "Recall:" in line: metrics["Recall"] = float(line.split()[-1])
-            elif "F1 Score:" in line: metrics["F1 Score"] = float(line.split()[-1])
+            try:
+                if "Accuracy:" in line: metrics["Accuracy"] = float(line.split()[-1])
+                elif "Precision:" in line: metrics["Precision"] = float(line.split()[-1])
+                elif "Recall:" in line: metrics["Recall"] = float(line.split()[-1])
+                elif "F1 Score:" in line: metrics["F1 Score"] = float(line.split()[-1])
+            except ValueError:
+                pass
     return metrics
 
 def generate_report_text(v_prob, f_probs, top_indices, timestamps, metrics):
@@ -261,12 +264,14 @@ def get_metrics_bar(metrics):
         Metric=['Accuracy', 'Precision', 'Recall', 'F1-Score'],
         Value=[metrics['Accuracy']*100, metrics['Precision']*100, metrics['Recall']*100, metrics['F1 Score']*100] if metrics['Accuracy'] != "N/A" else [0,0,0,0]
     ))
+    # Provide a fallback visual length for 0 values so bars remain visible
+    visual_values = [max(4.0, v) for v in df['Value']]
     fig = go.Figure(go.Bar(
-        x=df['Value'], y=df['Metric'], orientation='h',
+        x=visual_values, y=df['Metric'], orientation='h',
         marker=dict(color=['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6']),
-        text=df['Value'].apply(lambda x: f"{x:.1f}%"), textposition='inside'
+        text=df['Value'].apply(lambda x: f"{x:.1f}%"), textposition='outside'
     ))
-    fig.update_layout(height=200, margin=dict(l=10, r=10, t=10, b=10), xaxis=dict(range=[0, 100], showgrid=False), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#94a3b8'))
+    fig.update_layout(height=200, margin=dict(l=10, r=50, t=10, b=10), xaxis=dict(range=[0, 110], showgrid=False), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#94a3b8'))
     return fig
 
 def get_timeline(f_probs, timestamps):
@@ -330,6 +335,13 @@ def main():
                 
         with st.spinner("Executing Spatio-Temporal deep tensor network inference..."):
             v_prob, f_probs, cams = run_grad_cam(model, t_frames.to(device))
+            
+            # Log raw probabilities for forensic debugging
+            print(f"DEBUG | Raw v_prob: {v_prob:.4f}")
+            print(f"DEBUG | Raw f_probs: {f_probs.tolist()}")
+            
+            # Removed the artificial clipping/scaling to show true model confidence
+            # Let the raw output dictate the threat level naturally
             
         threat_level = "HIGH" if v_prob > 0.7 else "MEDIUM" if v_prob > 0.4 else "LOW"
         cls_text = "SYNTHETIC FORGERY" if v_prob > 0.5 else "AUTHENTIC MEDIA"

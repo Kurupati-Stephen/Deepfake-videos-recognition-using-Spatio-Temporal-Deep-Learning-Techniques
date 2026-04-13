@@ -19,11 +19,22 @@ class DeepfakeDataset(Dataset):
         if os.path.exists(real_dir):
             for vid_folder in os.listdir(real_dir):
                 fp = os.path.join(real_dir, vid_folder)
-                if os.path.isdir(fp): self.samples.append((fp, 0))
+                if os.path.isdir(fp):
+                    if len(glob.glob(os.path.join(fp, "*.jpg"))) > 0:
+                        self.samples.append((fp, 0))
+                    else:
+                        print(f"[!] Invalid Data: {fp} contains no frames. Skpping.")
         if os.path.exists(fake_dir):
             for vid_folder in os.listdir(fake_dir):
                 fp = os.path.join(fake_dir, vid_folder)
-                if os.path.isdir(fp): self.samples.append((fp, 1))
+                if os.path.isdir(fp):
+                    if len(glob.glob(os.path.join(fp, "*.jpg"))) > 0:
+                        self.samples.append((fp, 1))
+                    else:
+                        print(f"[!] Invalid Data: {fp} contains no frames. Skpping.")
+                        
+        if len(self.samples) == 0:
+            print("[CRITICAL] Processed dataset is entirely empty. Please ensure preprocessing_pipeline.py generates valid .jpg crops.")
 
     def __len__(self):
         return len(self.samples)
@@ -76,7 +87,8 @@ def get_dataloaders(config, split_ratio=0.8):
         
     train_size = int(split_ratio * len(dataset))
     test_size = len(dataset) - train_size
-    train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+    generator = torch.Generator().manual_seed(42)
+    train_dataset, test_dataset = random_split(dataset, [train_size, test_size], generator=generator)
     
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)

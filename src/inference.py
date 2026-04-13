@@ -80,6 +80,14 @@ class ForensicAnalyzer:
             outputs = self.model(tensor)
             prob = torch.sigmoid(outputs).item() * 100 # Overall Risk Score (%)
             
+            # Print raw outputs as requested
+            print(f"====== FORENSIC PREDICTION OVERVIEW ======")
+            print(f"Video: {os.path.basename(video_path)}")
+            print(f"Raw Output Logit: {outputs.item():.4f}")
+            print(f"Raw Probability: {prob/100:.4f}")
+            print(f"Final Class Threat: {'SYNTHETIC (1)' if prob >= 50 else 'AUTHENTIC (0)'}")
+            print(f"==========================================")
+            
         # 4. Frame-wise Real Probability Using the Model
         frame_risks = []
         with torch.no_grad():

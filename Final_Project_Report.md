@@ -73,6 +73,7 @@ A resilient 3-tier cascade was engineered to guarantee facial acquisition across
 ### 3.2. Spatio-Temporal Deep Learning Matrix (Classification)
 1. **Spatial Trace (CNN):** A ResNet-18 foundational model isolates 10 distinct video frame sequences and extracts deep spatial textures. Synthetic blending logic and morphed pixels (like edges of the face) trigger spatial irregularities within the high-dimensional tensors.
 2. **Temporal Trace (LSTM):** Natural human faces encompass smooth temporal continuity (eye-blinking, fluid micro-expressions). Deepfakes frequently stutter microscopically. The LSTM sequential state tracks these 10 matrices across the time axis to compute a temporal continuity score.
+3. **Imbalance-Aware Training Engine:** The `train.py` node maps dynamic `BCELoss` tensor multipliers to protect the gradient slope from collapsing during severely biased or one-sided datasets.
 
 ### 3.3. Forensic Explainability Layer (Interpretability)
 Rather than raw inference, the system calculates gradients mapped back to the last convolutional layer. The **Grad-CAM Algorithm** highlights "heatmaps", isolating red-zone pixel clusters around spatial boundary artifacts (lips, chins) which indicate the forgery's focal point. 

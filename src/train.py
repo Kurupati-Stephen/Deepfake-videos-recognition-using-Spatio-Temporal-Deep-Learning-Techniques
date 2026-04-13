@@ -26,16 +26,25 @@ def train_model():
         hidden_size=config["model"]["hidden_size"]
     ).to(device)
     
-    criterion = nn.BCELoss()
+    # Dynamically calculate class imbalance for weighted loss
+    all_labels = [label for _, label in train_loader.dataset]
+    num_pos = sum(all_labels)
+    num_neg = len(all_labels) - num_pos
+    pos_weight_val = num_neg / max(1, num_pos) if num_pos > 0 else 1.0
+    print(f"Dataset Split: {num_neg} Authentic (0), {num_pos} Synthetic (1)")
+    print(f"Setting positive class weight multiplier: {pos_weight_val:.2f}")
+
+    # Use standard BCELoss but we will manually apply class weighting per sample
+    criterion = nn.BCELoss(reduction='none')
     optimizer = Adam(model.parameters(), lr=config["model"]["learning_rate"], weight_decay=1e-5)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
     
     epochs = config["model"]["epochs"]
     models_dir = config["paths"]["models_dir"]
     os.makedirs(models_dir, exist_ok=True)
     
     best_loss = float('inf')
-    early_stop_patience = 5
+    early_stop_patience = 50
     patience_counter = 0
     
     for epoch in range(epochs):
@@ -49,12 +58,19 @@ def train_model():
             optimizer.zero_grad()
             v_probs, f_probs = model(batch_frames)
             
+            # Create sample weight tensor
+            weights = torch.ones_like(batch_labels)
+            weights[batch_labels == 1] = pos_weight_val
+            
             # Global loss
-            loss_v = criterion(v_probs, batch_labels)
+            loss_v_raw = criterion(v_probs, batch_labels)
+            loss_v = (loss_v_raw * weights).mean()
             
             # Frame wise loss
             batch_labels_expanded = batch_labels.unsqueeze(1).expand(-1, f_probs.size(1))
-            loss_f = criterion(f_probs, batch_labels_expanded)
+            weights_expanded = weights.unsqueeze(1).expand(-1, f_probs.size(1))
+            loss_f_raw = criterion(f_probs, batch_labels_expanded)
+            loss_f = (loss_f_raw * weights_expanded).mean()
             
             loss = loss_v + 0.5 * loss_f
             loss.backward()

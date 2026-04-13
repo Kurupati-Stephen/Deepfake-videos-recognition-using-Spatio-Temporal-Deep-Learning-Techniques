@@ -1,4 +1,9 @@
-Accuracy: N/A
-Precision: N/A
-Recall: N/A
-F1 Score: N/A
+Accuracy: 1.0000
+Precision: 1.0000
+Recall: 1.0000
+F1 Score: 1.0000
+
+--- DEBUG INFO ---
+y_true distrib: {0: 1, 1: 1}
+y_pred distrib: {0: 1, 1: 1}
+Total Samples: 2

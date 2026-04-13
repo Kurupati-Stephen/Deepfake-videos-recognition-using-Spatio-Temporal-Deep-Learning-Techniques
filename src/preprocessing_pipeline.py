@@ -81,7 +81,7 @@ def process_dataset():
     frames_per_video = config["preprocessing"]["frames_per_video"]
     crop_size = config["preprocessing"]["face_crop_size"]
     
-    device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu' # PyTorch MPS implementation error fallback
     mtcnn = MTCNN(keep_all=False, post_process=False, device=device)
     
     for label, raw_path in [("real", raw_real), ("fake", raw_fake)]:

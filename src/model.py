@@ -22,7 +22,7 @@ class SelfAttention(nn.Module):
         return context, attn_weights
 
 class SpatioTemporalModel(nn.Module):
-    def __init__(self, sequence_length=10, hidden_size=256, dropout=0.4):
+    def __init__(self, sequence_length=10, hidden_size=256, dropout=0.0):
         super(SpatioTemporalModel, self).__init__()
         self.sequence_length = sequence_length
         

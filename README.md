@@ -88,3 +88,7 @@ The Unique Extension is an *Explainable Suspicious Frame Localization*. By analy
 ## Limitations and Future Scope
 - **Hardware constraints**: Heavy reliance on MTCNN face cropping and Sequence learning requires a GPU for real-time inference on 4K videos.
 - **Future Enhancements**: Implement attention-based mechanisms (Vision Transformers) to provide spatial Grad-CAM heatmaps over the face itself, pinpointing precise facial artifacts.
+
+## Recent Architectural Updates
+- **Dynamic Class-Imbalance Handling**: The `train.py` pipeline now algorithmically maps `BCELoss` positive weighting to directly penalize single-class dataset bias, preventing model collapse.
+- **Unclamped Pure Evaluation**: Streamlit frontend was refined to remove any artificial probability temperature scaling, presenting pure inferenced neural logits and true class probabilities mapped dynamically using isolated `model.eval()` contexts.

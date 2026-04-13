@@ -26,7 +26,7 @@ from audio_detector import predict_audio, extract_audio_features
 
 # System Constants
 MODEL_VERSION = "Forensic-CNN-LSTM v3.0 (Enterprise Analytics Tier)"
-APP_TITLE = "AI Deepfake Forensic Analysis System"
+APP_TITLE = "Multimodal Synthetic Media Forensics & Threat Assessment System"
 
 st.set_page_config(page_title="Forensic Analytics Hub", layout="wide", initial_sidebar_state="collapsed")
 

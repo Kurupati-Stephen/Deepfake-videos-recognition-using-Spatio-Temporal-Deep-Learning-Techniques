@@ -1,12 +1,12 @@
-# Real-Time Forensic Detection of Deepfake Videos 🛡️
+# Multimodal Synthetic Media Forensics and Threat Assessment System 🛡️
 
-A Spatio-Temporal Deep Learning (CNN + LSTM) Deepfake Video Detection System with Explainable Suspicious Frame Localization.
+A Tri-Modal (Audio, Image, Video) Digital Forensic System powering Spatio-Temporal Deep Learning with Enterprise Risk Evaluation.
 
 ## Project Overview
-This project detects manipulated (Deepfake) videos by analyzing the spatial features of faces (frame-by-frame) using an advanced Convolutional Neural Network (CNN) and monitoring temporal inconsistencies across those frames using a Long Short-Term Memory (LSTM) network.
+This project detects manipulated synthetic media (deepfakes) providing comprehensive authenticity analysis across multiple domains. It analyzes audio frequencies, visual inconsistencies in stationary images, and spatial-temporal discontinuities across video frames using a Spatio-Temporal Deep Learning Network.
 
 ## Project Objective
-To build a robust pipeline that classifies a video as REAL or FAKE, bringing transparency into the decision process through an explainable dashboard that highlights the specific suspicious frames that contributed to the final inference.
+To build an enterprise-level, cybersecurity-oriented forensic pipeline that authenticates media inputs and brings deep transparency to the decision process via Grad-CAM tampering heatmaps and an independent audio risk engine.
 
 ## Dataset
 This project uses the `DeepfakeAI_Video_Recognition` dataset sourced from the Desktop. 

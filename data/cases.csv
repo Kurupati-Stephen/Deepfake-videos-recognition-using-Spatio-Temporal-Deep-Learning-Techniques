@@ -1,0 +1,8 @@
+Case ID,Timestamp,Filename,Prediction,Confidence,Risk Type,Threat Level,Trust Score,Action
+CID-7CE8FE30,2026-04-13 18:41:07,WhatsApp Video 2025-07-23 at 10.57.15 PM.mp4,AUTHENTIC,9.769019484519958,No Immediate Risk (Authentic),LOW,90.23098051548004,Media is certified authentic. No action required.
+CID-7CE8FE30,2026-04-13 18:45:47,WhatsApp Video 2025-07-23 at 10.57.15 PM.mp4,AUTHENTIC,9.769019484519958,No Immediate Risk (Authentic),LOW,90.23098051548004,Media is certified authentic. No action required.
+CID-CF493AB4,2026-04-14 00:32:37,Screenshot 2026-04-08 at 11.09.07 PM.png,Real,9.177212417125702,Personal Reputation Damage / General Deepfake,LOW,90.8227875828743,Do not circulate. Save as evidence.
+CID-CF493AB4,2026-04-14 00:33:06,WhatsApp Video 2025-07-23 at 10.57.15 PM.mp4,AUTHENTIC,9.769019484519958,No Immediate Risk (Authentic),LOW,90.23098051548004,Media is certified authentic. No action required.
+CID-CF493AB4,2026-04-14 00:34:18,musicinmedia-solo-piano-melancholic-drama-411737.mp3,Real,0.0,Personal Reputation Damage / General Deepfake,LOW,100.0,Do not circulate. Save as evidence.
+CID-CF493AB4,2026-04-14 00:34:44,WhatsApp Video 2025-07-23 at 10.57.15 PM.mp4,AUTHENTIC,9.769019484519958,No Immediate Risk (Authentic),LOW,90.23098051548004,Media is certified authentic. No action required.
+CID-FB5EDBD0,2026-04-14 00:39:56,adf9cb4466584d9d957ce4f94f7d2984.MP4,SYNTHETIC,99.64950680732727,Personal Reputation Damage / General Deepfake,HIGH,0.3504931926727295,Do not circulate. Save as evidence.

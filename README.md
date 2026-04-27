@@ -82,6 +82,10 @@ streamlit run dashboard/app.py
 ```
 Upload a video in the web interface to view the video-level prediction and the unique **frame-by-frame explainable confidence heatmap**.
 
+### 5. Live Virtual Broadcasting (Zoom / Google Meet)
+To use the forensic system directly inside live video calls, refer to the included `Integration_Guide.md`. 
+By leveraging **OBS Studio (Virtual Camera)**, you can broadcast the Streamlit Dashboard directly into Zoom, allowing participants to see real-time bounding boxes and deepfake trust scores. For live audio capture from macOS, the system integrates with **BlackHole 2ch** virtual audio driver.
+
 ## Explanation of Extension Features
 The Unique Extension is an *Explainable Suspicious Frame Localization*. By analyzing the individual outputs of a frame-wise classifier combined with the LSTM sequence output, the system returns a probability score for each individual frame. The top highest-probability fake frames are highlighted to explain exactly *where and when* the manipulation occurred in the video.
 

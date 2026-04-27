@@ -85,10 +85,13 @@ The system transcends simple detection. An **NLP-driven Risk Engine** classifies
 ## 4. Implementation Details (Dashboard)
 The product has been fully deployed via a `Streamlit` cybersecurity-console layout equipped with Data Visualization matrices (`Plotly`):
 * **Tri-Modal Operation:** Clean, independent UI tabs dedicated to isolated Video, Image, or Audio operations.
+* **Live Stream Forensics:** Real-time web-camera evaluations verifying active Zoom or MS Teams streaming detecting active spoofing instantaneously.
+* **Live Virtual Broadcasting:** End-to-end routing using OBS Virtual Camera and BlackHole 2ch audio drivers to broadcast the active Streamlit dashboard back into live Zoom/GMeet calls.
 * **Live Scanning Analytics:** Animated Gauge charts calculating Manipulation Risk and Trust Scores.
 * **Intelligent Heatmap Grids:** Extracts the explicitly tampered sub-pixels mapped directly onto the face images.
 * **Vocal Tract & Signal Analysis:** Timelines plotting calculated bio-metric audio abnormalities.
-* **Automated PDF/TXT Export:** Dedicated one-click forensic incident reporting downloads.
+* **Automated PDF/TXT Export:** Dedicated one-click high-fidelity forensic incident reporting downloads natively implemented using FPDF2.
+* **Enterprise Architecture:** Fully configured microservices using Docker orchestration (`docker-compose`) paired with a functional REST API allowing integrations independently of the dashboard.
 
 ---
 
@@ -115,5 +118,8 @@ The core Spatio-Temporal spatial validation model underwent benchmarking indicat
 **Q3: How does your UI handle processing failures?**
 > It has a highly robust 3-tier cascade failure protocol. If a visual target is too distant or blurred for MTCNN neural detection, the system continuously downshifts to OpenCV Haar cascades, and eventually Center-Cropping, entirely preventing standard system crashes.
 
-**Q4: How did you make single Images work mathematically inside an LSTM network that requires sequences?**
+**Q4: How do you handle live interactions and presenting the system to others over a video call?**
+> We developed an industrial-grade two-way routing setup. For input, we capture the screen to analyze the other participants' faces, and we use a virtual audio driver (BlackHole) to natively capture their voice bypassing OS security locks. For output, we use Virtual Broadcasting (via OBS Studio) to route our analytical Streamlit dashboard directly back into the Zoom/Meet call as our webcam, essentially acting as an augmented reality overlay.
+
+**Q5: How did you make single Images work mathematically inside an LSTM network that requires sequences?**
 > We engineered a dynamic tensor normalizer inside `image_detector.py`. When a static image is uploaded, we construct an N-sequence identical tensor stack representing simulated continuous still-frames. This perfectly satisfies the complex Spatio-temporal network's multi-frame dimension requirement without allocating memory for two fundamentally distinct models.

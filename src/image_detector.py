@@ -74,7 +74,9 @@ def predict_image(image_path, model=None, device=None, config=None):
     # Prediction
     v_prob, f_probs = model(input_tensor)
 
-    score = v_prob[0]
+    # For static images, we must use the spatial frame-wise classifier, as the LSTM will 
+    # not detect any temporal anomalies across artificially repeated identical frames.
+    score = f_probs[0][0]
     model.zero_grad()
     score.backward(retain_graph=True)
 
@@ -92,7 +94,7 @@ def predict_image(image_path, model=None, device=None, config=None):
         c /= np.max(c)
     cam_resized = cv2.resize(c, (image_size, image_size))
 
-    fake_prob = v_prob.item()
+    fake_prob = f_probs[0][0].item()
 
     if fake_prob > 0.5:
         prediction = "Fake"

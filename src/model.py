@@ -96,3 +96,70 @@ class SpatioTemporalModel(nn.Module):
         video_probs = torch.sigmoid(video_logits).view(batch_size)
         
         return video_probs, frame_probs
+
+class SpatialModel(nn.Module):
+    def __init__(self, dropout=0.5):
+        super(SpatialModel, self).__init__()
+        resnext = resnext50_32x4d(weights=ResNeXt50_32X4D_Weights.DEFAULT)
+        # Hook into layer4 for Grad-CAM.
+        self.feature_extractor = nn.Sequential(*list(resnext.children())[:-2]) 
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        
+        feature_dim = 2048
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=dropout),
+            nn.Linear(feature_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(p=dropout),
+            nn.Linear(256, 1)
+        )
+        self.gradients = None
+        self.activations = None
+        
+    def activations_hook(self, grad):
+        self.gradients = grad
+
+    def forward(self, x):
+        spatial_features = self.feature_extractor(x)
+        if spatial_features.requires_grad:
+            spatial_features.register_hook(self.activations_hook)
+        self.activations = spatial_features
+        
+        pooled = self.avgpool(spatial_features).view(x.size(0), -1)
+        logits = self.classifier(pooled)
+        probs = torch.sigmoid(logits).view(-1)
+        return probs
+
+class AudioModel(nn.Module):
+    def __init__(self, input_channels=40, dropout=0.3):
+        super(AudioModel, self).__init__()
+        self.conv_layers = nn.Sequential(
+            nn.Conv1d(input_channels, 64, kernel_size=3, padding=1),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+            
+            nn.Conv1d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+
+            nn.Conv1d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool1d(1)
+        )
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=dropout),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Dropout(p=dropout),
+            nn.Linear(128, 1)
+        )
+        
+    def forward(self, x):
+        features = self.conv_layers(x)
+        features = features.view(x.size(0), -1)
+        logits = self.classifier(features)
+        probs = torch.sigmoid(logits).view(-1)
+        return probs

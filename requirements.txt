@@ -13,3 +13,10 @@ plotly>=5.0.0
 librosa
 soundfile
 Pillow
+fpdf2
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+sounddevice
+mss

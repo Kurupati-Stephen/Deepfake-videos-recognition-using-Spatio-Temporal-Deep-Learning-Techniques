@@ -4,6 +4,6 @@ Recall: 1.0000
 F1 Score: 1.0000
 
 --- DEBUG INFO ---
-y_true distrib: {0: 1, 1: 1}
-y_pred distrib: {0: 1, 1: 1}
+y_true distrib: {np.int64(0): 1, np.int64(1): 1}
+y_pred distrib: {np.int64(0): 1, np.int64(1): 1}
 Total Samples: 2
